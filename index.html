@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NOVA BROKERS — Premium real estate brokerage. Explore verified properties across India.">
+    <title>NOVA BROKERS — Premium Real Estate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ─── HERO / HEADER ─── -->
+    <header class="hero" id="hero">
+        <!-- Video Background -->
+        <div class="hero-video-wrap">
+            <video class="hero-video" autoplay muted loop playsinline>
+                <source src="10803350-uhd_3840_2160_24fps.mp4" type="video/mp4">
+            </video>
+            <div class="hero-video-overlay"></div>
+        </div>
+
+        <nav class="nav">
+            <div class="nav-brand">
+                <img src="logo.jpg" alt="Nova Brokers Logo" class="brand-logo">
+                <div class="brand-name">
+                    <span class="brand-nova">NOVA</span>
+                    <span class="brand-brokers">BROKERS</span>
+                </div>
+            </div>
+            <div class="nav-stats" id="navStats">
+                <span class="stat-pill"><span id="totalCount">0</span> Properties</span>
+                <span class="stat-pill"><span id="cityCount">0</span> Cities</span>
+            </div>
+        </nav>
+
+        <div class="hero-content">
+            <p class="hero-tagline">Premium Real Estate Brokerage</p>
+            <h1 class="hero-title">Find Your <span class="highlight">Perfect</span> Property</h1>
+            <p class="hero-subtitle">Trusted by thousands. Verified listings across 77+ cities in India.</p>
+            <div class="hero-search">
+                <div class="search-box">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="searchInput" placeholder="Search by location, property name, or society..." autocomplete="off">
+                    <button class="search-clear" id="searchClear" title="Clear search">&times;</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroll-indicator" id="scrollIndicator">
+            <span>View Listings</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+    </header>
+
+    <!-- ─── MAIN CONTENT ─── -->
+    <main class="main-content">
+
+        <!-- ─── FILTERS PANEL ─── -->
+        <aside class="filters-panel" id="filtersPanel">
+            <div class="filters-header">
+                <h2 class="filters-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    Filters
+                </h2>
+                <button class="btn-reset" id="resetFilters" title="Reset all filters">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    Reset
+                </button>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Location / City</label>
+                <select id="filterLocation" class="filter-select">
+                    <option value="">All Locations</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">BHK Type</label>
+                <div class="chip-group" id="bhkChips"></div>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Budget Range (₹ Lac)</label>
+                <div class="range-inputs">
+                    <input type="number" id="budgetMin" placeholder="Min" min="0" class="filter-input">
+                    <span class="range-sep">—</span>
+                    <input type="number" id="budgetMax" placeholder="Max" min="0" class="filter-input">
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Carpet Area (sqft)</label>
+                <div class="range-inputs">
+                    <input type="number" id="areaMin" placeholder="Min" min="0" class="filter-input">
+                    <span class="range-sep">—</span>
+                    <input type="number" id="areaMax" placeholder="Max" min="0" class="filter-input">
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Furnishing</label>
+                <select id="filterFurnishing" class="filter-select">
+                    <option value="">All</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Transaction Type</label>
+                <select id="filterTransaction" class="filter-select">
+                    <option value="">All</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Facing</label>
+                <select id="filterFacing" class="filter-select">
+                    <option value="">All</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Ownership</label>
+                <select id="filterOwnership" class="filter-select">
+                    <option value="">All</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Bathrooms</label>
+                <select id="filterBathroom" class="filter-select">
+                    <option value="">Any</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4+</option>
+                </select>
+            </div>
+
+            <div class="active-filters" id="activeFilters"></div>
+        </aside>
+
+        <!-- ─── RESULTS AREA ─── -->
+        <section class="results-area">
+            <div class="results-toolbar" id="resultsToolbar">
+                <div class="results-info">
+                    <span class="results-count" id="resultsCount">Loading...</span>
+                    <button class="btn-toggle-filters" id="toggleFilters" title="Toggle filters">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    </button>
+                </div>
+                <div class="sort-controls">
+                    <label class="sort-label">Sort by:</label>
+                    <select id="sortSelect" class="filter-select sort-select">
+                        <option value="amount_asc">Price: Low → High</option>
+                        <option value="amount_desc">Price: High → Low</option>
+                        <option value="area_desc">Area: Largest First</option>
+                        <option value="area_asc">Area: Smallest First</option>
+                        <option value="ppsqft_asc">₹/sqft: Low → High</option>
+                        <option value="ppsqft_desc">₹/sqft: High → Low</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="property-grid" id="propertyGrid"></div>
+            <div class="pagination" id="pagination"></div>
+
+            <div class="no-results" id="noResults" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                <h3>No properties found</h3>
+                <p>Try adjusting your filters or search terms.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- ─── PROPERTY DETAIL MODAL ─── -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="propertyModal">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- ─── SELECTION SUMMARY PANEL ─── -->
+    <div class="selection-panel" id="selectionPanel">
+        <div class="selection-header">
+            <h3>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Your Selection <span class="selection-count" id="selectionCount">0</span>
+            </h3>
+            <button class="btn-clear-selection" id="clearSelection" title="Clear all">Clear All</button>
+        </div>
+        <div class="selection-list" id="selectionList"></div>
+        <div class="selection-footer">
+            <div class="selection-totals" id="selectionTotals"></div>
+            <button class="btn-export" id="exportSelection">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- ─── FAB ─── -->
+    <button class="fab-selection" id="fabSelection" title="View selected properties">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span class="fab-badge" id="fabBadge">0</span>
+    </button>
+
+    <!-- ─── LOADING ─── -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader">
+            <div class="loader-ring"></div>
+            <span>Loading properties...</span>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Ignore large raw dataset
+archive/
+*.csv
+
+# Ignore ML plots and temporary scripts
+plot_*.png
+run_script.py
+server.py
+export_data.py
+run_script.py
+
+# Python environment / cache
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.gemini/
+.agents/
