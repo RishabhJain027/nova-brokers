@@ -1107,6 +1107,7 @@
                         }
                     }
                 }
+            }
         });
 
         // Fetch live market news
