@@ -91,6 +91,9 @@
         breakdownFurnishing: $('#breakdownFurnishing'),
         breakdownStatus: $('#breakdownStatus'),
         breakdownAge: $('#breakdownAge'),
+        chartLocality: $('#chartLocality'),
+        chartBhk: $('#chartBhk'),
+        chartFurnishing: $('#chartFurnishing'),
     };
 
 
