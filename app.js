@@ -73,6 +73,24 @@
         exportSelection: $('#exportSelection'),
         fabSelection: $('#fabSelection'),
         fabBadge: $('#fabBadge'),
+        tabListings: $('#tabListings'),
+        tabPredictor: $('#tabPredictor'),
+        tabAnalytics: $('#tabAnalytics'),
+        listingsView: $('#listingsView'),
+        predictorView: $('#predictorView'),
+        analyticsView: $('#analyticsView'),
+        predLocation: $('#predLocation'),
+        predArea: $('#predArea'),
+        predBhk: $('#predBhk'),
+        predFurnishing: $('#predFurnishing'),
+        predStatus: $('#predStatus'),
+        predAge: $('#predAge'),
+        estimatedPrice: $('#estimatedPrice'),
+        estimatedPriceSqft: $('#estimatedPriceSqft'),
+        breakdownBase: $('#breakdownBase'),
+        breakdownFurnishing: $('#breakdownFurnishing'),
+        breakdownStatus: $('#breakdownStatus'),
+        breakdownAge: $('#breakdownAge'),
     };
 
 
@@ -823,15 +841,288 @@
 
 
     // ════════════════════════════════════════════════════════════
+    // TABS, PREDICTOR, AND ANALYTICS LOGIC
+    // ════════════════════════════════════════════════════════════
+
+    function initTabs() {
+        const tabs = [
+            { btn: dom.tabListings, view: dom.listingsView, showFilters: true },
+            { btn: dom.tabPredictor, view: dom.predictorView, showFilters: false },
+            { btn: dom.tabAnalytics, view: dom.analyticsView, showFilters: false }
+        ];
+
+        tabs.forEach(tab => {
+            tab.btn.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.btn.classList.remove('active');
+                    t.view.style.display = 'none';
+                });
+                tab.btn.classList.add('active');
+                tab.view.style.display = 'block';
+
+                if (tab.showFilters) {
+                    dom.filtersPanel.style.display = 'block';
+                } else {
+                    dom.filtersPanel.style.display = 'none';
+                }
+
+                if (tab.btn === dom.tabPredictor) {
+                    initPredictor();
+                } else if (tab.btn === dom.tabAnalytics) {
+                    initAnalytics();
+                }
+            });
+        });
+    }
+
+    const predLocations = {
+        "Andheri West": 18000, "Bandra West": 35000, "Powai": 20000,
+        "Thane West": 10000, "Navi Mumbai": 8500, "Worli": 40000,
+        "Goregaon East": 14000, "Kandivali West": 12000, "Borivali East": 11000,
+        "Chembur": 15000, "Dadar West": 25000, "Malad West": 13000,
+        "Juhu": 38000, "Vashi": 9500, "Kharghar": 7500,
+    };
+
+    let predictorInitialized = false;
+    function initPredictor() {
+        if (predictorInitialized) return;
+
+        // Populate location dropdown
+        dom.predLocation.innerHTML = '';
+        Object.keys(predLocations).sort().forEach(loc => {
+            const opt = document.createElement('option');
+            opt.value = loc;
+            opt.textContent = loc;
+            if (loc === 'Andheri West') opt.selected = true;
+            dom.predLocation.appendChild(opt);
+        });
+
+        // Add change/input listeners
+        [dom.predLocation, dom.predBhk, dom.predFurnishing, dom.predStatus].forEach(el => {
+            el.addEventListener('change', updatePrediction);
+        });
+
+        [dom.predArea, dom.predAge].forEach(el => {
+            el.addEventListener('input', updatePrediction);
+        });
+
+        predictorInitialized = true;
+        updatePrediction();
+    }
+
+    function updatePrediction() {
+        const loc = dom.predLocation.value;
+        const area = parseFloat(dom.predArea.value) || 0;
+        const furnishing = dom.predFurnishing.value;
+        const status = dom.predStatus.value;
+        const age = parseFloat(dom.predAge.value) || 0;
+
+        const basePricePerSqft = predLocations[loc] || 15000;
+
+        // Furnishing multiplier
+        let furnishingMult = 1.0;
+        if (furnishing === "Furnished") furnishingMult = 1.15;
+        else if (furnishing === "Semi-Furnished") furnishingMult = 1.05;
+
+        // Status multiplier
+        let statusMult = 1.0;
+        if (status === "Under Construction") statusMult = 0.90;
+
+        // Age decay
+        let ageDecay = Math.max(0.85, 1.0 - age * 0.008);
+
+        // Total amount (synthetic pricing formula)
+        const estimatedSqft = basePricePerSqft * furnishingMult * statusMult * ageDecay;
+        const totalAmount = estimatedSqft * area;
+
+        // Display results
+        let formattedPrice = '';
+        const amountLac = totalAmount / 100000;
+        if (amountLac >= 100) {
+            formattedPrice = `₹${(amountLac / 100).toFixed(2)} Cr`;
+        } else {
+            formattedPrice = `₹${amountLac.toFixed(1)} Lac`;
+        }
+
+        dom.estimatedPrice.textContent = formattedPrice;
+        dom.estimatedPriceSqft.textContent = `₹${Math.round(estimatedSqft).toLocaleString()} / sqft`;
+
+        dom.breakdownBase.textContent = `₹${basePricePerSqft.toLocaleString()} / sqft`;
+        dom.breakdownFurnishing.textContent = `${furnishingMult.toFixed(2)}x`;
+        dom.breakdownStatus.textContent = `${statusMult.toFixed(2)}x`;
+        dom.breakdownAge.textContent = `${ageDecay.toFixed(2)}x`;
+    }
+
+    let charts = {};
+    function initAnalytics() {
+        if (!state.allProperties || state.allProperties.length === 0) return;
+
+        if (charts.locality) charts.locality.destroy();
+        if (charts.bhk) charts.bhk.destroy();
+        if (charts.furnishing) charts.furnishing.destroy();
+
+        // 1. Average Price by Locality (top 10)
+        const locMap = {};
+        state.allProperties.forEach(p => {
+            if (!p.location || p.price_per_sqft <= 0) return;
+            if (!locMap[p.location]) locMap[p.location] = { sum: 0, count: 0 };
+            locMap[p.location].sum += p.price_per_sqft;
+            locMap[p.location].count += 1;
+        });
+        const avgLoc = Object.keys(locMap).map(loc => ({
+            location: loc,
+            avg: locMap[loc].sum / locMap[loc].count
+        })).sort((a, b) => b.avg - a.avg).slice(0, 10);
+
+        const ctxLoc = dom.chartLocality.getContext('2d');
+        charts.locality = new Chart(ctxLoc, {
+            type: 'bar',
+            data: {
+                labels: avgLoc.map(x => x.location),
+                datasets: [{
+                    label: 'Avg ₹ / sqft',
+                    data: avgLoc.map(x => Math.round(x.avg)),
+                    backgroundColor: 'rgba(201, 168, 76, 0.75)',
+                    borderColor: 'rgba(201, 168, 76, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` ₹${context.raw.toLocaleString()}/sqft`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#9496A8' }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#9496A8' }
+                    }
+                }
+            }
+        });
+
+        // 2. BHK Distribution
+        const bhkCounts = {};
+        state.allProperties.forEach(p => {
+            if (p.bhk === 'N/A') return;
+            const key = `${p.bhk} BHK`;
+            bhkCounts[key] = (bhkCounts[key] || 0) + 1;
+        });
+        const bhkLabels = Object.keys(bhkCounts).sort();
+        const bhkData = bhkLabels.map(k => bhkCounts[k]);
+
+        const ctxBhk = dom.chartBhk.getContext('2d');
+        charts.bhk = new Chart(ctxBhk, {
+            type: 'doughnut',
+            data: {
+                labels: bhkLabels,
+                datasets: [{
+                    data: bhkData,
+                    backgroundColor: [
+                        'rgba(201, 168, 76, 0.8)',
+                        'rgba(58, 123, 213, 0.8)',
+                        'rgba(58, 213, 166, 0.8)',
+                        'rgba(213, 58, 123, 0.8)',
+                        'rgba(123, 58, 213, 0.8)'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { color: '#9496A8' }
+                    }
+                }
+            }
+        });
+
+        // 3. Average Price by Furnishing Status
+        const furnMap = {};
+        state.allProperties.forEach(p => {
+            if (!p.furnishing || p.furnishing === 'Not Specified' || p.amount_lac <= 0) return;
+            if (!furnMap[p.furnishing]) furnMap[p.furnishing] = { sum: 0, count: 0 };
+            furnMap[p.furnishing].sum += p.amount_lac;
+            furnMap[p.furnishing].count += 1;
+        });
+        const furnLabels = Object.keys(furnMap);
+        const furnData = furnLabels.map(k => furnMap[k].sum / furnMap[k].count);
+
+        const ctxFurn = dom.chartFurnishing.getContext('2d');
+        charts.furnishing = new Chart(ctxFurn, {
+            type: 'bar',
+            data: {
+                labels: furnLabels,
+                datasets: [{
+                    data: furnData,
+                    backgroundColor: 'rgba(58, 123, 213, 0.75)',
+                    borderColor: 'rgba(58, 123, 213, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` ₹${context.raw.toFixed(1)} Lac`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9496A8' }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: {
+                            color: '#9496A8',
+                            callback: function(val) { return `₹${val}L`; }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ════════════════════════════════════════════════════════════
     // INIT
     // ════════════════════════════════════════════════════════════
 
     function init() {
         bindEvents();
+        initTabs();
         updateSelectionUI();
         loadData();
     }
 
     init();
+
+    // Export to global scope if needed
+    window.initAnalytics = initAnalytics;
+    window.initPredictor = initPredictor;
 
 })();
